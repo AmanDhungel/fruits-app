@@ -34,7 +34,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/version', (req, res) => {
-    res.json({ version: '1.1' });
+    res.json({ version: '1.2' });
 });
 
 app.get('/health', (req, res) => {
