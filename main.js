@@ -6,20 +6,28 @@ const port = process.env.PORT || 3000;
 const MESSAGE = process.env.MESSAGE || 'Hello, World123!';
 const { createClient } = require('redis')
 
-const redis = createClient({ url: process.env.REDIS_URL || 'redis://localhost:6379' });
+const redis = createClient({ url: process.env.REDIS_URL || 'redis://redis:6379' });
 
 redis.on('error', (err) => console.log('Redis Client Error', err));
 
-redis.connect().then(() => console.log('Redis Client Connected'));
+redis.connect()
+    .then(() => console.log('Redis Client Connected'))
+    .catch((err) => console.error('Redis connect failed:', err.message));
 
 
 app.get('/fruits', async (req, res) => {
-    const cached = await redis.get('fruits');
-    if (cached) {
-        return res.json({ source: 'cache', fruits: JSON.parse(cached) });
+
+    if (redis.isReady) {
+        const cached = await redis.get('fruits');
+        if (cached) {
+            return res.json({ source: 'cache', fruits: JSON.parse(cached) });
+        }
     }
+
     const result = await pool.query('SELECT * FROM fruits');
-    await redis.set('fruits', JSON.stringify(result.rows), { EX: 30 }); // expires in 30s
+    if (redis.isReady) {
+        await redis.set('fruits', JSON.stringify(result.rows), { EX: 30 });
+    }
     res.json({ source: 'database', fruits: result.rows });
 });
 
