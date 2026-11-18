@@ -17,11 +17,10 @@ redis.connect()
 
 app.get('/fruits', async (req, res) => {
     if (redis.isReady) {
-        redis.get('fruits').then(cached => {
-            if (cached) {
-                return res.json({ source: 'cache', fruits: JSON.parse(cached) });
-            }
-        });
+        const cached = await redis.get('fruits');
+        if (cached) {
+            return res.json({ source: 'cache', fruits: JSON.parse(cached) });
+        }
     }
     const result = await pool.query('SELECT * FROM fruits');
     if (redis.isReady) {
